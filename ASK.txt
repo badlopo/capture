@@ -1,0 +1,70 @@
+==========
+
+在Windows编程中，`RECT`结构体通常用于表示一个矩形区域，它包含了矩形的左上角和右下角的坐标。在`WINDOWINFO`结构体中，`rcWindow`字段就是一个`RECT`结构体，它表示了窗口的客户区域在屏幕上的位置和大小。
+
+`RECT`结构体的定义如下：
+
+```cpp
+typedef struct tagRECT {
+    LONG left;
+    LONG top;
+    LONG right;
+    LONG bottom;
+} RECT;
+```
+
+- `left`: 矩形左边界的x坐标。
+- `top`: 矩形上边界的y坐标。
+- `right`: 矩形右边界的x坐标。
+- `bottom`: 矩形下边界的y坐标。
+
+`WINDOWINFO`结构体的定义如下：
+
+```cpp
+typedef struct tagWINDOWINFO {
+    DWORD cbSize;
+    RECT  rcWindow;
+    RECT  rcClient;
+    DWORD dwStyle;
+    DWORD dwExStyle;
+    DWORD dwWindowStatus;
+    UINT  cxWindowBorders;
+    UINT  cyWindowBorders;
+    ATOM  atomWindowType;
+    WORD  wCreatorVersion;
+} WINDOWINFO;
+```
+
+- `cbSize`: 结构体的大小，以字节为单位。
+- `rcWindow`: 窗口在屏幕上的位置和大小，是一个`RECT`结构体。
+- `rcClient`: 窗口客户区域在屏幕上的位置和大小，是一个`RECT`结构体。
+- `dwStyle`: 窗口的样式。
+- `dwExStyle`: 窗口的扩展样式。
+- `dwWindowStatus`: 窗口的状态。
+- `cxWindowBorders`: 窗口边框的宽度。
+- `cyWindowBorders`: 窗口边框的高度。
+- `atomWindowType`: 窗口的类型。
+- `wCreatorVersion`: 窗口创建者的版本。
+
+因此，`rcWindow`字段表示的是窗口在屏幕上的实际位置和大小，包括了窗口的边框和标题栏。如果你想要获取窗口的客户区域大小，应该使用`rcClient`字段。
+
+==========
+
+`MONITORINFO` 是 Windows API 中的一个结构体，它包含了关于显示器的信息。这个结构体在 `winuser.h` 头文件中定义。以下是 `MONITORINFO` 结构体中的一些字段及其含义：
+
+- `cbSize`: 结构体的大小，以字节为单位。
+- `rcMonitor`: 一个 `RECT` 结构体，表示显示器的屏幕坐标。
+- `rcWork`: 一个 `RECT` 结构体，表示显示器的工作区域的屏幕坐标。
+- `dwFlags`: 一个 `DWORD` 值，表示显示器的状态和属性。
+
+`dwFlags` 字段可以包含以下标志：
+
+- `MONITORINFOF_PRIMARY`: 表示这是主显示器。
+- `MONITORINFOF_NO_WORKAREA`: 表示没有工作区域。
+- `MONITORINFOF_NO_DESKTOP`: 表示没有桌面。
+- `MONITORINFOF_NO_NAME`: 表示没有显示器名称。
+- `MONITORINFOF_NO_GDI_COMPATIBLE_DC`: 表示没有与 GDI 兼容的设备上下文。
+- `MONITORINFOF_NO_MONITOR`: 表示没有显示器。
+
+这些标志可以通过位操作进行组合，以表示显示器的多种状态和属性。
+
