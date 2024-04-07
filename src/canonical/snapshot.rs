@@ -1,7 +1,8 @@
-use std::fmt::{Debug, Display, Formatter};
+use std::fmt::{Debug, Formatter};
 use image::RgbaImage;
 use crate::canonical::XYWH;
 
+#[allow(unused)]
 pub struct ScreenInfo {
     name: String,
     is_primary: bool,
@@ -9,6 +10,7 @@ pub struct ScreenInfo {
     img: RgbaImage,
 }
 
+#[allow(unused)]
 impl ScreenInfo {
     pub fn new(name: impl Into<String>, is_primary: bool, xywh: XYWH, img: RgbaImage) -> ScreenInfo {
         ScreenInfo { name: name.into(), is_primary, xywh, img }
@@ -36,6 +38,7 @@ impl Debug for ScreenInfo {
     }
 }
 
+#[allow(unused)]
 pub struct AppInfo {
     name: String,
     title: String,
@@ -44,6 +47,7 @@ pub struct AppInfo {
     img: RgbaImage,
 }
 
+#[allow(unused)]
 impl AppInfo {
     pub fn new(
         name: impl Into<String>,
@@ -73,12 +77,14 @@ impl Debug for AppInfo {
 }
 
 /// A snapshot of the current state of the monitor(s) and the app(s).
+#[allow(unused)]
 #[derive(Debug)]
 pub struct Snapshot {
     pub screens: Vec<ScreenInfo>,
     pub apps: Vec<AppInfo>,
 }
 
+#[allow(unused)]
 impl Snapshot {
     pub fn new(screens: Vec<ScreenInfo>, apps: Vec<AppInfo>) -> Snapshot {
         Snapshot { screens, apps }
