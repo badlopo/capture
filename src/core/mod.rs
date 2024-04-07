@@ -47,8 +47,9 @@ mod unit_test {
     use super::*;
 
     #[test]
-    fn t() {
+    fn take_snapshot_test() {
         let now = std::time::Instant::now();
+
         match Core::take_snapshot() {
             Ok(snapshot) => {
                 println!("Snapshot: {:#?}", snapshot);
@@ -57,6 +58,45 @@ mod unit_test {
                 println!("Error: {:?}", e);
             }
         }
+
+        println!("Elapsed: {:?}", now.elapsed());
+    }
+
+    #[test]
+    fn misc() {
+        let now = std::time::Instant::now();
+
+        let mut screens = vec![];
+        match Monitor::all() {
+            Ok(monitors) => {
+                for monitor in monitors {
+                    screens.push(ScreenInfo::new(
+                        monitor.name(),
+                        monitor.is_primary(),
+                        (monitor.x(), monitor.y(), monitor.width(), monitor.height()),
+                        monitor.capture_image().unwrap(),
+                    ));
+                }
+            }
+            Err(err) => {
+                println!("Fail! {}", err);
+            }
+        }
+        println!("Screens: {:#?}", screens);
+
+        for (idx, screen) in screens.iter().enumerate() {
+            screen.save(format!("screen_{}.png", idx)).unwrap();
+            println!("{}, elapsed: {:?}", idx, now.elapsed());
+        }
+        // match Window::all() {
+        //     Ok(windows) => {
+        //         println!("{}", windows.len());
+        //     }
+        //     Err(err) => {
+        //         println!("Fail! {}", err);
+        //     }
+        // }
+
         println!("Elapsed: {:?}", now.elapsed());
     }
 }
