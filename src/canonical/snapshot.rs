@@ -13,6 +13,12 @@ impl ScreenInfo {
     pub fn new(name: impl Into<String>, is_primary: bool, xywh: XYWH, img: RgbaImage) -> ScreenInfo {
         ScreenInfo { name: name.into(), is_primary, xywh, img }
     }
+
+    pub fn img(&self) -> &RgbaImage { &self.img }
+
+    pub fn save(&self, path: impl AsRef<std::path::Path>) -> Result<(), String> {
+        self.img.save(path).map_err(|err| format!("Error saving image: {:?}", err))
+    }
 }
 
 impl Debug for ScreenInfo {
