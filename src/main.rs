@@ -1,3 +1,10 @@
 // #![windows_subsystem = "windows"]
 
-fn main() {}
+
+mod canonical;
+mod core;
+mod ui;
+
+fn main() {
+    ui::ui_test();
+}
