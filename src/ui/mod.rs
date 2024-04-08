@@ -7,13 +7,16 @@ mod app;
 pub fn ui_test() {
     let option = eframe::NativeOptions {
         viewport: ViewportBuilder::default()
-            .with_position([100.0, 100.0])
-            .with_inner_size([3000.0, 2000.0]),
+            .with_position([5.0, 5.0])
+            .with_inner_size([4470.0, 2510.0])
+            .with_clamp_size_to_monitor_size(false)
+            .with_decorations(false)
+            .with_always_on_top(),
         ..Default::default()
     };
 
     eframe::run_native(
-        "large window test",
+        "a large window app",
         option,
         Box::new(|ctx| Box::new(MyApp::new())),
     ).unwrap();
