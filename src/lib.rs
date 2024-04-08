@@ -1,3 +1,3 @@
 mod canonical;
-mod core;
-mod ui;
+mod cropper;
+mod snapper;

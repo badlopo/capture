@@ -1,5 +1,5 @@
 use egui::ViewportBuilder;
-use crate::ui::app::MyApp;
+use crate::cropper::app::MyApp;
 
 mod app;
 

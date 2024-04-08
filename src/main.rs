@@ -2,9 +2,9 @@
 
 
 mod canonical;
-mod core;
-mod ui;
+mod cropper;
+mod snapper;
 
 fn main() {
-    ui::ui_test();
+    cropper::ui_test();
 }

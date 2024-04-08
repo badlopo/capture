@@ -1,9 +1,9 @@
 use xcap::{Monitor, Window, XCapError};
 use crate::canonical::{AppInfo, ScreenInfo, Snapshot};
 
-pub struct Core {}
+pub struct Snapper {}
 
-impl Core {
+impl Snapper {
     fn _take_snapshot() -> Result<Snapshot, XCapError> {
         // monitor info
         let monitors = Monitor::all()?;
@@ -39,7 +39,7 @@ impl Core {
     }
 
     pub fn take_snapshot() -> Result<Snapshot, String> {
-        Core::_take_snapshot().map_err(|e| format!("{:?}", e))
+        Snapper::_take_snapshot().map_err(|e| format!("{:?}", e))
     }
 }
 
@@ -51,7 +51,7 @@ mod unit_test {
     fn take_snapshot_test() {
         let now = std::time::Instant::now();
 
-        match Core::take_snapshot() {
+        match Snapper::take_snapshot() {
             Ok(snapshot) => {
                 println!("Snapshot: {:#?}", snapshot);
             }
@@ -81,7 +81,7 @@ mod unit_test {
                 }
             }
             Err(err) => {
-                println!("Fail! {}", err);
+                println!("Fail! {:?}", err);
             }
         }
         println!("Screens: {:#?}", screens);
