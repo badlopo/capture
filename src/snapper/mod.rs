@@ -1,7 +1,7 @@
 use xcap::{Monitor, Window, XCapError};
 use crate::canonical::{AppInfo, ScreenInfo, Snapshot};
 
-pub struct Snapper {}
+pub struct Snapper;
 
 impl Snapper {
     fn _take_snapshot() -> Result<Snapshot, XCapError> {

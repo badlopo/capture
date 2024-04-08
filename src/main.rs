@@ -1,6 +1,5 @@
 // #![windows_subsystem = "windows"]
 
-
 mod canonical;
 mod cropper;
 mod snapper;
