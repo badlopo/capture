@@ -5,5 +5,5 @@ mod cropper;
 mod snapper;
 
 fn main() {
-    cropper::ui_test();
+    cropper::Cropper::ui_test();
 }
