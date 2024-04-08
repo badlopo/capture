@@ -7,13 +7,14 @@ pub struct ScreenInfo {
     name: String,
     is_primary: bool,
     xywh: XYWH,
+    sf: f32,
     img: RgbaImage,
 }
 
 #[allow(unused)]
 impl ScreenInfo {
-    pub fn new(name: impl Into<String>, is_primary: bool, xywh: XYWH, img: RgbaImage) -> ScreenInfo {
-        ScreenInfo { name: name.into(), is_primary, xywh, img }
+    pub fn new(name: impl Into<String>, is_primary: bool, xywh: XYWH, sf: f32, img: RgbaImage) -> ScreenInfo {
+        ScreenInfo { name: name.into(), is_primary, xywh, sf, img }
     }
 
     pub fn img(&self) -> &RgbaImage { &self.img }
@@ -27,13 +28,14 @@ impl Debug for ScreenInfo {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "{}: primary = {}, position = ({},{}), size = {}x{}",
+            "{}: primary = {}, position = ({},{}), size = {}x{}, sf = {}",
             self.name,
             self.is_primary,
             self.xywh.0,
             self.xywh.1,
             self.xywh.2,
-            self.xywh.3
+            self.xywh.3,
+            self.sf
         )
     }
 }

@@ -15,6 +15,7 @@ impl Core {
                 monitor.name(),
                 monitor.is_primary(),
                 (monitor.x(), monitor.y(), monitor.width(), monitor.height()),
+                monitor.scale_factor(),
                 monitor.capture_image()?,
             ));
         }
@@ -74,7 +75,8 @@ mod unit_test {
                         monitor.name(),
                         monitor.is_primary(),
                         (monitor.x(), monitor.y(), monitor.width(), monitor.height()),
-                        monitor.capture_image().unwrap(),
+                        monitor.scale_factor(),
+                        Default::default(),
                     ));
                 }
             }
@@ -84,10 +86,10 @@ mod unit_test {
         }
         println!("Screens: {:#?}", screens);
 
-        for (idx, screen) in screens.iter().enumerate() {
-            screen.save(format!("screen_{}.png", idx)).unwrap();
-            println!("{}, elapsed: {:?}", idx, now.elapsed());
-        }
+        // for (idx, screen) in screens.iter().enumerate() {
+        //     screen.save(format!("screen_{}.png", idx)).unwrap();
+        //     println!("{}, elapsed: {:?}", idx, now.elapsed());
+        // }
         // match Window::all() {
         //     Ok(windows) => {
         //         println!("{}", windows.len());
