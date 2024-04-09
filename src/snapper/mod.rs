@@ -16,7 +16,7 @@ impl Snapper {
                 monitor.is_primary(),
                 (monitor.x(), monitor.y(), monitor.width(), monitor.height()),
                 monitor.scale_factor(),
-                monitor.capture_image()?,
+                monitor.capture_image()?.into_raw(),
             ));
         }
 

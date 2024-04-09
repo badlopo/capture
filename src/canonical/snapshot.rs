@@ -1,5 +1,4 @@
 use std::fmt::{Debug, Formatter};
-use image::RgbaImage;
 use crate::canonical::XYWH;
 
 #[allow(unused)]
@@ -8,20 +7,20 @@ pub struct ScreenInfo {
     is_primary: bool,
     xywh: XYWH,
     sf: f32,
-    img: RgbaImage,
+    /// The raw pixels of the screen image in RGBA format.
+    ///
+    /// That is, 4 bytes per pixel. (Length = width * height * 4.)
+    rgba_pixels: Vec<u8>,
 }
 
 #[allow(unused)]
 impl ScreenInfo {
-    pub fn new(name: impl Into<String>, is_primary: bool, xywh: XYWH, sf: f32, img: RgbaImage) -> ScreenInfo {
-        ScreenInfo { name: name.into(), is_primary, xywh, sf, img }
+    pub fn new(name: impl Into<String>, is_primary: bool, xywh: XYWH, sf: f32, rgba_pixels: Vec<u8>) -> ScreenInfo {
+        ScreenInfo { name: name.into(), is_primary, xywh, sf, rgba_pixels }
     }
 
-    pub fn img(&self) -> &RgbaImage { &self.img }
-
-    pub fn save(&self, path: impl AsRef<std::path::Path>) -> Result<(), String> {
-        self.img.save(path).map_err(|err| format!("Error saving image: {:?}", err))
-    }
+    /// The raw pixels of the screen image in RGBA format.
+    pub fn pixels(&self) -> &Vec<u8> { &self.rgba_pixels }
 }
 
 impl Debug for ScreenInfo {
