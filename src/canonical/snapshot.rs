@@ -46,7 +46,6 @@ pub struct AppInfo {
     title: String,
     is_minimized: bool,
     xywh: XYWH,
-    img: RgbaImage,
 }
 
 #[allow(unused)]
@@ -56,9 +55,8 @@ impl AppInfo {
         title: impl Into<String>,
         is_minimized: bool,
         xywh: XYWH,
-        img: RgbaImage,
     ) -> AppInfo {
-        AppInfo { name: name.into(), title: title.into(), is_minimized, xywh, img }
+        AppInfo { name: name.into(), title: title.into(), is_minimized, xywh }
     }
 }
 

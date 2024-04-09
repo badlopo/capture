@@ -31,7 +31,6 @@ impl Snapper {
                 window.title(),
                 window.is_minimized(),
                 (window.x(), window.y(), window.width(), window.height()),
-                window.capture_image()?,
             ));
         }
 
