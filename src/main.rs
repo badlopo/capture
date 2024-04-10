@@ -5,7 +5,7 @@ mod cropper;
 mod snapper;
 
 fn main() {
-    cropper::Cropper::ui_test();
+    cropper::Cropper::snap_and_crop().unwrap();
 }
 
 #[cfg(test)]

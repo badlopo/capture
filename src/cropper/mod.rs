@@ -1,7 +1,7 @@
 mod app;
 
 use egui::ViewportBuilder;
-use crate::cropper::app::MyApp;
+use crate::cropper::app::{CropApp};
 use crate::snapper::Snapper;
 
 pub struct Cropper;
@@ -11,13 +11,6 @@ impl Cropper {
     pub fn snap_and_crop() -> Result<(), String> {
         let source = Snapper::take_snapshot()?;
 
-        // TODO: crop the source image
-
-        Ok(())
-    }
-
-    /// test only, use for not expose too much to outside mod
-    pub fn ui_test() {
         let option = eframe::NativeOptions {
             viewport: ViewportBuilder::default()
                 .with_position([5.0, 5.0])
@@ -31,7 +24,9 @@ impl Cropper {
         eframe::run_native(
             "a large window app",
             option,
-            Box::new(|ctx| Box::new(MyApp::new())),
+            Box::new(|ctx| Box::new(CropApp::new(source))),
         ).unwrap();
+
+        Ok(())
     }
 }
