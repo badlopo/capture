@@ -2,15 +2,16 @@ use std::fmt::{Debug, Formatter};
 use crate::canonical::XYWH;
 
 #[allow(unused)]
+/// although all fields are public, it is recommended not to modify them directly
 pub struct ScreenInfo {
-    name: String,
-    is_primary: bool,
-    xywh: XYWH,
-    sf: f32,
+    pub name: String,
+    pub is_primary: bool,
+    pub xywh: XYWH,
+    pub sf: f32,
     /// The raw pixels of the screen image in RGBA format.
     ///
     /// That is, 4 bytes per pixel. (Length = width * height * 4.)
-    rgba_pixels: Vec<u8>,
+    pub rgba_pixels: Vec<u8>,
 }
 
 #[allow(unused)]
@@ -18,9 +19,6 @@ impl ScreenInfo {
     pub fn new(name: impl Into<String>, is_primary: bool, xywh: XYWH, sf: f32, rgba_pixels: Vec<u8>) -> ScreenInfo {
         ScreenInfo { name: name.into(), is_primary, xywh, sf, rgba_pixels }
     }
-
-    /// The raw pixels of the screen image in RGBA format.
-    pub fn pixels(&self) -> &Vec<u8> { &self.rgba_pixels }
 }
 
 impl Debug for ScreenInfo {
@@ -41,13 +39,14 @@ impl Debug for ScreenInfo {
 
 #[allow(unused)]
 pub struct AppInfo {
-    name: String,
-    title: String,
-    is_minimized: bool,
-    xywh: XYWH,
+    pub name: String,
+    pub title: String,
+    pub is_minimized: bool,
+    pub xywh: XYWH,
 }
 
 #[allow(unused)]
+/// although all fields are public, it is recommended not to modify them directly
 impl AppInfo {
     pub fn new(
         name: impl Into<String>,
