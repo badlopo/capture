@@ -1,15 +1,55 @@
 use eframe::egui::{Frame};
 use egui::{Color32, Context, Key, ViewportCommand};
+use crate::canonical::{ScreenInfo, Snapshot, XYWH};
 
-pub struct MyApp {}
+struct CropperHelper {
+    /// The snapshot to be cropped.
+    snapshot: Snapshot,
+    /// The bounding box of the cropping area.
+    bounding: XYWH,
+}
 
-impl MyApp {
-    pub fn new() -> MyApp {
-        MyApp {}
+impl CropperHelper {
+    /// Calculate the bounding box of the screens.
+    fn bounding(screens: &Vec<ScreenInfo>) -> XYWH {
+        let mut xx = (0, 0);
+        let mut yy = (0, 0);
+
+        for screen in screens {
+            let (sx, sy, sw, sh) = screen.xywh;
+            xx.0 = xx.0.min(sx);
+            xx.1 = xx.1.max(sx + sw as i32);
+            yy.0 = yy.0.min(sy);
+            yy.1 = yy.1.max(sy + sh as i32);
+        }
+
+        (xx.0, yy.0, (xx.1 - xx.0) as u32, (yy.1 - yy.0) as u32)
+    }
+
+    pub fn from_snapshot(snapshot: Snapshot) -> CropperHelper {
+        let bounding = CropperHelper::bounding(&snapshot.screens);
+        CropperHelper { snapshot, bounding }
+    }
+
+    /// detect whether the point is in any app window. If so, return the window's bounding box.
+    pub fn auto_bound(&self, point: (i32, i32)) -> Option<XYWH> {
+        todo!("auto_bound")
     }
 }
 
-impl eframe::App for MyApp {
+pub struct CropApp {
+    helper: CropperHelper,
+}
+
+impl CropApp {
+    pub fn new(snapshot: Snapshot) -> CropApp {
+        CropApp {
+            helper: CropperHelper::from_snapshot(snapshot),
+        }
+    }
+}
+
+impl eframe::App for CropApp {
     fn update(&mut self, ctx: &Context, frame: &mut eframe::Frame) {
         egui::CentralPanel::default()
             .frame(Frame::none().fill(Color32::DARK_GRAY))
