@@ -10,6 +10,11 @@ struct CropperHelper {
 }
 
 impl CropperHelper {
+    pub fn new(snapshot: Snapshot) -> CropperHelper {
+        let bounding = CropperHelper::bounding(&snapshot.screens);
+        CropperHelper { snapshot, bounding }
+    }
+
     /// Calculate the bounding box of the screens.
     fn bounding(screens: &Vec<ScreenInfo>) -> XYWH {
         let mut xx = (0, 0);
@@ -26,11 +31,6 @@ impl CropperHelper {
         (xx.0, yy.0, (xx.1 - xx.0) as u32, (yy.1 - yy.0) as u32)
     }
 
-    pub fn from_snapshot(snapshot: Snapshot) -> CropperHelper {
-        let bounding = CropperHelper::bounding(&snapshot.screens);
-        CropperHelper { snapshot, bounding }
-    }
-
     /// detect whether the point is in any app window. If so, return the window's bounding box.
     pub fn auto_bound(&self, point: (i32, i32)) -> Option<XYWH> {
         todo!("auto_bound")
@@ -44,7 +44,7 @@ pub struct CropApp {
 impl CropApp {
     pub fn new(snapshot: Snapshot) -> CropApp {
         CropApp {
-            helper: CropperHelper::from_snapshot(snapshot),
+            helper: CropperHelper::new(snapshot),
         }
     }
 }
