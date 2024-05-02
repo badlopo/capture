@@ -1,8 +1,8 @@
 use std::fmt::{Debug, Formatter};
 use crate::canonical::XYWH;
 
+/// Although all fields are public, it is recommended not to modify them directly
 #[allow(unused)]
-/// although all fields are public, it is recommended not to modify them directly
 pub struct ScreenInfo {
     pub name: String,
     pub is_primary: bool,
@@ -45,8 +45,8 @@ pub struct AppInfo {
     pub xywh: XYWH,
 }
 
+/// Although all fields are public, it is recommended not to modify them directly
 #[allow(unused)]
-/// although all fields are public, it is recommended not to modify them directly
 impl AppInfo {
     pub fn new(
         name: impl Into<String>,

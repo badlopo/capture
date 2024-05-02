@@ -31,7 +31,7 @@ impl CropperHelper {
         (xx.0, yy.0, (xx.1 - xx.0) as u32, (yy.1 - yy.0) as u32)
     }
 
-    /// detect whether the point is in any app window. If so, return the window's bounding box.
+    /// Detect whether the point is in any app window. If so, return the window's bounding box.
     pub fn auto_bound(&self, point: (i32, i32)) -> Option<XYWH> {
         todo!("auto_bound")
     }
