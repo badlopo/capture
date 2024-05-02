@@ -4,7 +4,8 @@ use crate::canonical::{AppInfo, ScreenInfo, Snapshot};
 pub struct Snapper;
 
 impl Snapper {
-    fn _take_snapshot() -> Result<Snapshot, XCapError> {
+    /// Take a snapshot of the screens.
+    fn _screens() -> Result<Vec<ScreenInfo>, XCapError> {
         // monitor info
         let monitors = Monitor::all()?;
 
@@ -20,6 +21,11 @@ impl Snapper {
             ));
         }
 
+        Ok(screens)
+    }
+
+    /// Take a snapshot of the apps.
+    fn _apps() -> Result<Vec<AppInfo>, XCapError> {
         // window info
         let windows = Window::all()?;
 
@@ -34,11 +40,22 @@ impl Snapper {
             ));
         }
 
-        Ok(Snapshot::new(screens, apps))
+        Ok(apps)
     }
 
-    pub fn take_snapshot() -> Result<Snapshot, String> {
-        Snapper::_take_snapshot().map_err(|e| format!("{:?}", e))
+    /// Take a snapshot of the screens and apps(if with_app_info is true).
+    pub fn take_snapshot(with_app_info: bool) -> Result<Snapshot, String> {
+        match Snapper::_screens() {
+            Ok(screens) => if with_app_info {
+                match Snapper::_apps() {
+                    Ok(apps) => Ok(Snapshot::new(screens, apps)),
+                    Err(err2) => Err(format!("{:?}", err2)),
+                }
+            } else {
+                Ok(Snapshot::new(screens, vec![]))
+            }
+            Err(err1) => Err(format!("{:?}", err1))
+        }
     }
 }
 
@@ -50,7 +67,7 @@ mod unit_test {
     fn take_snapshot_test() {
         let now = std::time::Instant::now();
 
-        match Snapper::take_snapshot() {
+        match Snapper::take_snapshot(false) {
             Ok(snapshot) => {
                 println!("Snapshot: {:#?}", snapshot);
             }
@@ -58,45 +75,6 @@ mod unit_test {
                 println!("Error: {:?}", e);
             }
         }
-
-        println!("Elapsed: {:?}", now.elapsed());
-    }
-
-    #[test]
-    fn misc() {
-        let now = std::time::Instant::now();
-
-        let mut screens = vec![];
-        match Monitor::all() {
-            Ok(monitors) => {
-                for monitor in monitors {
-                    screens.push(ScreenInfo::new(
-                        monitor.name(),
-                        monitor.is_primary(),
-                        (monitor.x(), monitor.y(), monitor.width(), monitor.height()),
-                        monitor.scale_factor(),
-                        Default::default(),
-                    ));
-                }
-            }
-            Err(err) => {
-                println!("Fail! {:?}", err);
-            }
-        }
-        println!("Screens: {:#?}", screens);
-
-        // for (idx, screen) in screens.iter().enumerate() {
-        //     screen.save(format!("screen_{}.png", idx)).unwrap();
-        //     println!("{}, elapsed: {:?}", idx, now.elapsed());
-        // }
-        // match Window::all() {
-        //     Ok(windows) => {
-        //         println!("{}", windows.len());
-        //     }
-        //     Err(err) => {
-        //         println!("Fail! {}", err);
-        //     }
-        // }
 
         println!("Elapsed: {:?}", now.elapsed());
     }
