@@ -7,9 +7,13 @@ use crate::snapper::Snapper;
 pub struct Cropper;
 
 impl Cropper {
-    /// take a snapshot and crop it with interactive UI
-    pub fn snap_and_crop() -> Result<(), String> {
-        let source = Snapper::take_snapshot()?;
+    /// Take a snapshot and crop it with interactive UI
+    ///
+    /// # Arguments
+    ///
+    /// * `auto_bounding` - Whether to automatically bounding the application window when the mouse passes over it.
+    pub fn exec(auto_bounding: bool) -> Result<(), String> {
+        let snapshot = Snapper::take_snapshot(auto_bounding)?;
 
         let option = eframe::NativeOptions {
             viewport: ViewportBuilder::default()
@@ -24,7 +28,7 @@ impl Cropper {
         eframe::run_native(
             "a large window app",
             option,
-            Box::new(|ctx| Box::new(CropApp::new(source))),
+            Box::new(|ctx| Box::new(CropApp::new(snapshot))),
         ).unwrap();
 
         Ok(())
