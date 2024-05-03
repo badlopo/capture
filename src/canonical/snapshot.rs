@@ -78,6 +78,7 @@ impl Debug for AppInfo {
 #[allow(unused)]
 #[derive(Debug)]
 pub struct Snapshot {
+    xywh: XYWH,
     pub screens: Vec<ScreenInfo>,
     pub apps: Vec<AppInfo>,
 }
@@ -85,6 +86,28 @@ pub struct Snapshot {
 #[allow(unused)]
 impl Snapshot {
     pub fn new(screens: Vec<ScreenInfo>, apps: Vec<AppInfo>) -> Snapshot {
-        Snapshot { screens, apps }
+        if screens.is_empty() {
+            panic!("No screen found");
+        }
+
+        let (x1, y1, x2, y2) = screens.iter().fold(
+            (i32::MAX, i32::MAX, i32::MIN, i32::MIN),
+            |(x1, y1, x2, y2), screen| {
+                let (x, y, w, h) = screen.xywh;
+                (
+                    x1.min(x),
+                    y1.min(y),
+                    x2.max(x + w as i32),
+                    y2.max(y + h as i32),
+                )
+            },
+        );
+        let xywh: XYWH = (x1, y1, (x2 - x1) as u32, (y2 - y1) as u32);
+
+        Snapshot { xywh, screens, apps }
+    }
+
+    pub fn xywh(&self) -> XYWH {
+        self.xywh
     }
 }
