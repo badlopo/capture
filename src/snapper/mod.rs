@@ -69,7 +69,10 @@ mod unit_test {
 
         match Snapper::take_snapshot(false) {
             Ok(snapshot) => {
+                let xywh = snapshot.xywh();
+
                 println!("Snapshot: {:#?}", snapshot);
+                println!("xywh: {:?}", xywh);
             }
             Err(e) => {
                 println!("Error: {:?}", e);
