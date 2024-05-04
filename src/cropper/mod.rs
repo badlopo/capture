@@ -1,4 +1,5 @@
 mod app;
+mod config;
 
 use egui::ViewportBuilder;
 use crate::cropper::app::{CropApp};
@@ -18,18 +19,23 @@ impl Cropper {
 
         let option = eframe::NativeOptions {
             viewport: ViewportBuilder::default()
-                .with_position([x as f32, y as f32])
-                .with_inner_size([w as f32, h as f32])
-                // .with_clamp_size_to_monitor_size(false)
+                .with_taskbar(false)
                 .with_decorations(false)
-                .with_always_on_top(),
+                .with_always_on_top()
+                .with_position([x as f32, y as f32])
+                // FIXME: bug with 'always_on_top' when 'with_inner_size' equals to screen size
+                .with_inner_size([w as f32 - 1.0, h as f32]),
             ..Default::default()
         };
 
         eframe::run_native(
             "Capture",
             option,
-            Box::new(|ctx| Box::new(CropApp::new(snapshot))),
+            Box::new(|cc| {
+                // install image loaders for egui
+                egui_extras::install_image_loaders(&cc.egui_ctx);
+                Box::new(CropApp::simple(snapshot))
+            }),
         ).unwrap();
 
         Ok(())
