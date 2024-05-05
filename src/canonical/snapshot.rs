@@ -14,13 +14,6 @@ pub struct ScreenInfo {
     pub rgba_pixels: Vec<u8>,
 }
 
-#[allow(unused)]
-impl ScreenInfo {
-    pub fn new(name: impl Into<String>, is_primary: bool, xywh: XYWH, sf: f32, rgba_pixels: Vec<u8>) -> ScreenInfo {
-        ScreenInfo { name: name.into(), is_primary, xywh, sf, rgba_pixels }
-    }
-}
-
 impl Debug for ScreenInfo {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(
@@ -43,19 +36,6 @@ pub struct AppInfo {
     pub title: String,
     pub is_minimized: bool,
     pub xywh: XYWH,
-}
-
-/// Although all fields are public, it is recommended not to modify them directly
-#[allow(unused)]
-impl AppInfo {
-    pub fn new(
-        name: impl Into<String>,
-        title: impl Into<String>,
-        is_minimized: bool,
-        xywh: XYWH,
-    ) -> AppInfo {
-        AppInfo { name: name.into(), title: title.into(), is_minimized, xywh }
-    }
 }
 
 impl Debug for AppInfo {

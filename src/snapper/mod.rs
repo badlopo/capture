@@ -12,13 +12,13 @@ impl Snapper {
         // info & screenshot of each monitor
         let mut screens = vec![];
         for monitor in monitors {
-            screens.push(ScreenInfo::new(
-                monitor.name(),
-                monitor.is_primary(),
-                (monitor.x(), monitor.y(), monitor.width(), monitor.height()),
-                monitor.scale_factor(),
-                monitor.capture_image()?.into_raw(),
-            ));
+            screens.push(ScreenInfo {
+                name: monitor.name().into(),
+                is_primary: monitor.is_primary(),
+                xywh: (monitor.x(), monitor.y(), monitor.width(), monitor.height()),
+                sf: monitor.scale_factor(),
+                rgba_pixels: monitor.capture_image()?.into_raw(),
+            });
         }
 
         Ok(screens)
@@ -32,12 +32,12 @@ impl Snapper {
         // info & screenshot of each window
         let mut apps = vec![];
         for window in windows {
-            apps.push(AppInfo::new(
-                window.app_name(),
-                window.title(),
-                window.is_minimized(),
-                (window.x(), window.y(), window.width(), window.height()),
-            ));
+            apps.push(AppInfo {
+                name: window.app_name().into(),
+                title: window.title().into(),
+                is_minimized: window.is_minimized(),
+                xywh: (window.x(), window.y(), window.width(), window.height()),
+            });
         }
 
         Ok(apps)
