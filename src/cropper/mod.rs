@@ -12,8 +12,8 @@ impl Cropper {
     /// Take a snapshot and crop it with interactive UI
     pub fn exec(cropper_config: CropperConfig) -> Result<(), String> {
         let snapshot = Snapper::take_snapshot(cropper_config.auto_bounding)?;
-        let (x, y, w, h) = snapshot.xywh;
 
+        let (x, y, w, h) = snapshot.xywh;
         let option = eframe::NativeOptions {
             viewport: ViewportBuilder::default()
                 .with_taskbar(false)
