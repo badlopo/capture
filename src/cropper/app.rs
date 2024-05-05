@@ -1,37 +1,48 @@
-use egui::{Frame, Color32, Context, Key, ViewportCommand, Image, Rect, Pos2, Vec2};
-use crate::canonical::{Snapshot, XYWH};
+use egui::{Frame, Color32, Context, Key, ViewportCommand, Image, Rect, Pos2, Vec2, Ui};
+use crate::canonical::{Snapshot};
 use crate::cropper::config::CropperConfig;
 
 struct Helper {
-    xywh: XYWH,
+    fragments: Vec<(String, Pos2, Vec2, Vec<u8>)>,
 }
 
 impl Helper {
-    pub fn new(xywh: XYWH) -> Helper {
-        Helper { xywh }
+    pub fn new(snapshot: Snapshot) -> Helper {
+        let mut fragments = vec![];
+        for screen in &snapshot.screens {
+            let (x, y, w, h) = screen.xywh;
+            // TODO: apply transformation from screen coordinates to window coordinates
+            fragments.push((
+                screen.name.clone(),
+                Pos2::new(x as f32, y as f32),
+                Vec2::new(w as f32, h as f32),
+                screen.buffer(),
+            ));
+        }
+
+        Helper { fragments }
     }
 
-    // /// Detect whether the point is in any app window. If so, return the window's bounding box.
-    // pub fn auto_bound(&self, point: (i32, i32)) -> Option<XYWH> {
-    //     todo!("auto_bound")
-    // }
+    pub fn draw_screens(&self, ui: &mut Ui) {
+        let fragments = self.fragments.clone();
+        for fragment in fragments {
+            let (name, pos, size, data) = fragment;
+            ui.put(
+                Rect::from_min_size(pos, size),
+                Image::from_bytes(name, data),
+            );
+        }
+    }
 }
 
 pub struct CropApp {
-    snapshot: Snapshot,
     helper: Helper,
-
-    mask_color: Color32,
 }
 
 impl CropApp {
-    pub fn new(snapshot: Snapshot, config: CropperConfig) -> CropApp {
-        let helper = Helper::new(snapshot.xywh);
-        CropApp {
-            snapshot,
-            helper,
-            mask_color: config.get_mask_color(),
-        }
+    pub fn new(snapshot: Snapshot, _config: CropperConfig) -> CropApp {
+        let helper = Helper::new(snapshot);
+        CropApp { helper }
     }
 }
 
@@ -40,16 +51,8 @@ impl eframe::App for CropApp {
         egui::CentralPanel::default()
             .frame(Frame::none().fill(Color32::WHITE))
             .show(ctx, |ui| {
-                // TODO: put all screens into the panel
-                ui.put(
-                    Rect::from_min_size(
-                        Pos2::new(0.0, 0.0),
-                        Vec2::new(1920.0, 1080.0),
-                    ), Image::from_bytes(
-                        "bytes://screen1.png",
-                        include_bytes!("../../test/img.png"),
-                    ),
-                );
+                // draw all screens
+                self.helper.draw_screens(ui);
 
                 // process input events
                 if ctx.input(|i| i.key_pressed(Key::Escape)) {
