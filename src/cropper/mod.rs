@@ -3,18 +3,15 @@ mod config;
 
 use egui::ViewportBuilder;
 use crate::cropper::app::{CropApp};
+use crate::cropper::config::CropperConfig;
 use crate::snapper::Snapper;
 
 pub struct Cropper;
 
 impl Cropper {
     /// Take a snapshot and crop it with interactive UI
-    ///
-    /// # Arguments
-    ///
-    /// * `auto_bounding` - Whether to automatically bounding the application window when the mouse passes over it.
-    pub fn exec(auto_bounding: bool) -> Result<(), String> {
-        let snapshot = Snapper::take_snapshot(auto_bounding)?;
+    pub fn exec(cropper_config: CropperConfig) -> Result<(), String> {
+        let snapshot = Snapper::take_snapshot(cropper_config.auto_bounding)?;
         let (x, y, w, h) = snapshot.xywh;
 
         let option = eframe::NativeOptions {
@@ -32,9 +29,8 @@ impl Cropper {
             "Capture",
             option,
             Box::new(|cc| {
-                // install image loaders for egui
                 egui_extras::install_image_loaders(&cc.egui_ctx);
-                Box::new(CropApp::simple(snapshot))
+                Box::new(CropApp::new(snapshot, cropper_config))
             }),
         ).unwrap();
 

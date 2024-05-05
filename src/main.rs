@@ -5,7 +5,7 @@ mod cropper;
 mod snapper;
 
 fn main() {
-    cropper::Cropper::exec(false).unwrap();
+    cropper::Cropper::exec(Default::default()).unwrap();
 }
 
 // https://github.com/emilk/egui/issues/4451

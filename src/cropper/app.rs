@@ -25,17 +25,12 @@ pub struct CropApp {
 }
 
 impl CropApp {
-    pub fn simple(snapshot: Snapshot) -> CropApp {
-        CropApp::with_config(snapshot, CropperConfig::default())
-    }
-
-    // TODO: expose 'CropperConfig' to the user
-    pub fn with_config(snapshot: Snapshot, config: CropperConfig) -> CropApp {
+    pub fn new(snapshot: Snapshot, config: CropperConfig) -> CropApp {
         let helper = Helper::new(snapshot.xywh);
         CropApp {
             snapshot,
             helper,
-            mask_color: config.mask_color(),
+            mask_color: config.get_mask_color(),
         }
     }
 }
