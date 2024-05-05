@@ -31,7 +31,7 @@ impl CropApp {
 
     // TODO: expose 'CropperConfig' to the user
     pub fn with_config(snapshot: Snapshot, config: CropperConfig) -> CropApp {
-        let helper = Helper::new(snapshot.xywh());
+        let helper = Helper::new(snapshot.xywh);
         CropApp {
             snapshot,
             helper,

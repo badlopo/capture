@@ -1,4 +1,5 @@
 use std::fmt::{Debug, Formatter};
+use image::RgbaImage;
 use crate::canonical::XYWH;
 
 /// Although all fields are public, it is recommended not to modify them directly
@@ -8,10 +9,7 @@ pub struct ScreenInfo {
     pub is_primary: bool,
     pub xywh: XYWH,
     pub sf: f32,
-    /// The raw pixels of the screen image in RGBA format.
-    ///
-    /// That is, 4 bytes per pixel. (Length = width * height * 4.)
-    pub rgba_pixels: Vec<u8>,
+    pub rgba_image: RgbaImage,
 }
 
 impl Debug for ScreenInfo {
@@ -58,7 +56,7 @@ impl Debug for AppInfo {
 #[allow(unused)]
 #[derive(Debug)]
 pub struct Snapshot {
-    xywh: XYWH,
+    pub xywh: XYWH,
     pub screens: Vec<ScreenInfo>,
     pub apps: Vec<AppInfo>,
 }
@@ -85,9 +83,5 @@ impl Snapshot {
         let xywh: XYWH = (x1, y1, (x2 - x1) as u32, (y2 - y1) as u32);
 
         Snapshot { xywh, screens, apps }
-    }
-
-    pub fn xywh(&self) -> XYWH {
-        self.xywh
     }
 }

@@ -15,7 +15,7 @@ impl Cropper {
     /// * `auto_bounding` - Whether to automatically bounding the application window when the mouse passes over it.
     pub fn exec(auto_bounding: bool) -> Result<(), String> {
         let snapshot = Snapper::take_snapshot(auto_bounding)?;
-        let (x, y, w, h) = snapshot.xywh();
+        let (x, y, w, h) = snapshot.xywh;
 
         let option = eframe::NativeOptions {
             viewport: ViewportBuilder::default()

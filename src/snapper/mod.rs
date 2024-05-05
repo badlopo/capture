@@ -17,7 +17,7 @@ impl Snapper {
                 is_primary: monitor.is_primary(),
                 xywh: (monitor.x(), monitor.y(), monitor.width(), monitor.height()),
                 sf: monitor.scale_factor(),
-                rgba_pixels: monitor.capture_image()?.into_raw(),
+                rgba_image: monitor.capture_image()?,
             });
         }
 
@@ -69,7 +69,7 @@ mod unit_test {
 
         match Snapper::take_snapshot(false) {
             Ok(snapshot) => {
-                let xywh = snapshot.xywh();
+                let xywh = snapshot.xywh;
 
                 println!("Snapshot: {:#?}", snapshot);
                 println!("xywh: {:?}", xywh);
@@ -80,5 +80,18 @@ mod unit_test {
         }
 
         println!("Elapsed: {:?}", now.elapsed());
+    }
+
+    #[test]
+    fn xcap_test() {
+        let screens = Monitor::all().unwrap();
+        let screen = &screens[0];
+        let img = screen.capture_image().unwrap();
+        println!("{:?}", img.dimensions());
+
+        img.save("./screen.png");
+
+        let buffer = img.into_raw();
+        println!("{}", buffer.len());
     }
 }
