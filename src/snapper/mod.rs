@@ -81,17 +81,4 @@ mod unit_test {
 
         println!("Elapsed: {:?}", now.elapsed());
     }
-
-    #[test]
-    fn xcap_test() {
-        let screens = Monitor::all().unwrap();
-        let screen = &screens[0];
-        let img = screen.capture_image().unwrap();
-        println!("{:?}", img.dimensions());
-
-        img.save("./screen.png");
-
-        let buffer = img.into_raw();
-        println!("{}", buffer.len());
-    }
 }
