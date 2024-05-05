@@ -1,5 +1,6 @@
 use std::fmt::{Debug, Formatter};
-use image::RgbaImage;
+use std::io::Cursor;
+use image::{ImageFormat, RgbaImage};
 use crate::canonical::XYWH;
 
 /// Although all fields are public, it is recommended not to modify them directly
@@ -25,6 +26,25 @@ impl Debug for ScreenInfo {
             self.xywh.3,
             self.sf
         )
+    }
+}
+
+impl ScreenInfo {
+    /// Get the buffer of the screen image in PNG format
+    ///
+    /// Note: this is costly, use it wisely
+    pub fn buffer(&self) -> Vec<u8> {
+        let mut buffer = Cursor::new(vec![]);
+        self.rgba_image.write_to(&mut buffer, ImageFormat::Png).unwrap();
+        buffer.into_inner()
+    }
+
+
+    /// Get the raw pixels of the screen image in RGBA format.
+    ///
+    /// That is, 4 bytes per pixel. (Length = width * height * 4.)
+    pub fn pixels(&self) -> &Vec<u8> {
+        self.rgba_image.as_raw()
     }
 }
 
