@@ -1,4 +1,4 @@
-// #![windows_subsystem = "windows"]
+#![windows_subsystem = "windows"]
 
 mod canonical;
 mod cropper;
@@ -17,10 +17,10 @@ fn main() {
 //         viewport: ViewportBuilder::default()
 //             .with_taskbar(false)
 //             .with_decorations(false)
-//             // .with_always_on_top()  // <= uncomment this line to reproduce the bug
+//             .with_always_on_top()  // <= uncomment this line to reproduce the bug
 //             .with_position([10.0, 10.0])
 //             // replace with the screen size for the actual use
-//             .with_inner_size([1920.0, 1080.0]),
+//             .with_inner_size([4000.0, 3000.0]),
 //         ..Default::default()
 //     };
 //
@@ -31,8 +31,21 @@ fn main() {
 //             egui::CentralPanel::default()
 //                 .frame(Frame::none().fill(Color32::WHITE))
 //                 .show(ctx, |ui| {
-//                     if ui.button("close").clicked() {
+//                     if ui.button("Close").clicked() {
 //                         ctx.send_viewport_cmd(ViewportCommand::Close);
+//                     }
+//                     if ui.button("Maximize").clicked() {
+//                         ui.ctx()
+//                             .send_viewport_cmd(ViewportCommand::Maximized(true));
+//                     }
+//                     if ui.button("UnMaximize").clicked() {
+//                         ui.ctx()
+//                             .send_viewport_cmd(ViewportCommand::Maximized(false));
+//                     }
+//                     if ui.button("set innersize to 500x500").clicked() {
+//                         ui.ctx().send_viewport_cmd(ViewportCommand::InnerSize(
+//                             egui::Vec2::new(500.0, 500.0)
+//                         ));
 //                     }
 //
 //                     if ctx.input(|i| i.key_pressed(Key::Escape)) {
