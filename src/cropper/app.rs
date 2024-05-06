@@ -42,7 +42,9 @@ pub struct CropApp {
 impl CropApp {
     pub fn new(snapshot: Snapshot, _config: CropperConfig) -> CropApp {
         let helper = Helper::new(snapshot);
-        CropApp { helper }
+        CropApp {
+            helper,
+        }
     }
 }
 
@@ -54,7 +56,13 @@ impl eframe::App for CropApp {
                 // draw all screens
                 self.helper.draw_screens(ui);
 
-                // process input events
+                // TODO: draw mask and crop area
+
+                // TODO: draw operation UI
+
+                // exit conditions
+                // 1. press 'Esc' key
+                // 2. lose focus -- TODO: https://github.com/emilk/egui/issues/4468
                 if ctx.input(|i| i.key_pressed(Key::Escape)) {
                     ctx.send_viewport_cmd(ViewportCommand::Close);
                 }
