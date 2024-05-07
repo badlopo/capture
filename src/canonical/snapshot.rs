@@ -8,6 +8,7 @@ use crate::canonical::XYWH;
 pub struct ScreenInfo {
     pub name: String,
     pub is_primary: bool,
+    /// The bounding box of the screen
     pub xywh: XYWH,
     pub sf: f32,
     pub rgba_image: RgbaImage,
@@ -76,6 +77,7 @@ impl Debug for AppInfo {
 #[allow(unused)]
 #[derive(Debug)]
 pub struct Snapshot {
+    /// The bounding box of the snapshot (which includes all screens and apps)
     pub xywh: XYWH,
     pub screens: Vec<ScreenInfo>,
     pub apps: Vec<AppInfo>,
