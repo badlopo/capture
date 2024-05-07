@@ -8,13 +8,16 @@ struct Helper {
 
 impl Helper {
     pub fn new(snapshot: Snapshot) -> Helper {
+        // offset to apply from screen coordinates to app coordinates
+        let (offset_x, offset_y, _, _) = snapshot.xywh;
+
+        // fragments to draw
         let mut fragments = vec![];
         for screen in &snapshot.screens {
             let (x, y, w, h) = screen.xywh;
-            // TODO: apply transformation from screen coordinates to window coordinates
             fragments.push((
                 screen.name.clone(),
-                Pos2::new(x as f32, y as f32),
+                Pos2::new((x - offset_x) as f32, (y - offset_y) as f32),
                 Vec2::new(w as f32, h as f32),
                 screen.buffer(),
             ));
