@@ -1,15 +1,25 @@
-use egui::{Frame, Color32, Context, Key, ViewportCommand, Image, Rect, Pos2, Vec2, Ui};
+use egui::{Frame, Color32, Context, Key, ViewportCommand, Image, Rect, Pos2, Vec2, Ui, Rounding};
 use crate::canonical::{Snapshot};
 use crate::cropper::config::CropperConfig;
 
 struct Helper {
+    /// bottom-right position of the application window
+    b_r: Pos2,
+
+    /// (name, position, size, data)
     fragments: Vec<(String, Pos2, Vec2, Vec<u8>)>,
+
+    cover_crop: bool,
+    mask_color: Color32,
+
+    crop_from: Option<Pos2>,
+    crop_to: Option<Pos2>,
 }
 
 impl Helper {
-    pub fn new(snapshot: Snapshot) -> Helper {
-        // offset to apply from screen coordinates to app coordinates
-        let (offset_x, offset_y, _, _) = snapshot.xywh;
+    pub fn new(snapshot: Snapshot, config: CropperConfig) -> Helper {
+        // offset to apply from screen coordinates to in-app coordinates
+        let (offset_x, offset_y, app_w, app_h) = snapshot.xywh;
 
         // fragments to draw
         let mut fragments = vec![];
@@ -23,7 +33,14 @@ impl Helper {
             ));
         }
 
-        Helper { fragments }
+        Helper {
+            b_r: Pos2::new(app_w as f32, app_h as f32),
+            fragments,
+            cover_crop: config.selection_mode,
+            mask_color: config.get_mask_color(),
+            crop_from: None,
+            crop_to: None,
+        }
     }
 
     pub fn draw_screens(&self, ui: &mut Ui) {
@@ -36,6 +53,34 @@ impl Helper {
             );
         }
     }
+
+    pub fn draw_crop(&self, ui: &mut Ui) {
+        if self.crop_from.is_none() || self.crop_to.is_none() {
+            return;
+        }
+
+        let from = self.crop_from.unwrap();
+        let to = self.crop_to.unwrap();
+
+        if self.cover_crop {
+            ui.painter().rect_filled(
+                Rect::from_two_pos(from, to),
+                Rounding::ZERO,
+                self.mask_color,
+            );
+        } else {
+            // TODO: draw 4 parts of Rect as mask
+        }
+    }
+
+    pub fn start_crop(&mut self, at: Option<Pos2>) {
+        // clamp crop area inside dimension
+        self.crop_from = at.and_then(|p| Some(p.clamp(Pos2::ZERO, self.b_r)));
+    }
+    pub fn update_crop(&mut self, at: Option<Pos2>) {
+        // clamp crop area inside dimension
+        self.crop_to = at.and_then(|p| Some(p.clamp(Pos2::ZERO, self.b_r)));
+    }
 }
 
 pub struct CropApp {
@@ -43,8 +88,8 @@ pub struct CropApp {
 }
 
 impl CropApp {
-    pub fn new(snapshot: Snapshot, _config: CropperConfig) -> CropApp {
-        let helper = Helper::new(snapshot);
+    pub fn new(snapshot: Snapshot, config: CropperConfig) -> CropApp {
+        let helper = Helper::new(snapshot, config);
         CropApp {
             helper,
         }
@@ -56,12 +101,20 @@ impl eframe::App for CropApp {
         egui::CentralPanel::default()
             .frame(Frame::none().fill(Color32::WHITE))
             .show(ctx, |ui| {
-                // draw all screens
-                self.helper.draw_screens(ui);
+                if ctx.input(|i| i.pointer.primary_pressed()) {
+                    let pos = ctx.pointer_interact_pos();
+                    self.helper.start_crop(pos);
+                }
+                if ctx.input(|i| i.pointer.primary_down()) {
+                    let pos = ctx.pointer_interact_pos();
+                    self.helper.update_crop(pos);
+                }
 
-                // TODO: draw mask and crop area
+                self.helper.draw_screens(ui);
+                self.helper.draw_crop(ui);
 
                 // TODO: draw operation UI
+                // ctx.send_viewport_cmd(ViewportCommand::Screenshot);
 
                 // exit conditions
                 // 1. press 'Esc' key
