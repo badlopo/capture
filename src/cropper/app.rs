@@ -2,6 +2,21 @@ use egui::{Frame, Color32, Context, Key, ViewportCommand, Image, Rect, Pos2, Vec
 use crate::canonical::{Snapshot};
 use crate::cropper::config::CropperConfig;
 
+/// get the 4 corners (TL, TR, BR, BL) of the bounding-box from any 2 points (p1, p2)
+fn get_4_corners(p1: Pos2, p2: Pos2) -> [Pos2; 4] {
+    let xl = p1.x.min(p2.x);
+    let xr = p1.x.max(p2.x);
+    let yt = p1.y.min(p2.y);
+    let yb = p1.y.max(p2.y);
+
+    [
+        Pos2::new(xl, yt),
+        Pos2::new(xr, yt),
+        Pos2::new(xr, yb),
+        Pos2::new(xl, yb),
+    ]
+}
+
 struct Helper {
     /// bottom-right position of the application window
     b_r: Pos2,
@@ -69,7 +84,22 @@ impl Helper {
                 self.mask_color,
             );
         } else {
-            // TODO: draw 4 parts of Rect as mask
+            // TODO: diagram
+            let pa = Pos2::ZERO;
+            let pb = Pos2::new(self.b_r.x, 0.0);
+            let pc = self.b_r;
+            let pd = Pos2::new(0.0, self.b_r.y);
+            let [p1, p2, p3, p4] = get_4_corners(from, to);
+
+            let parts = [
+                Rect::from_two_pos(pa, p2),
+                Rect::from_two_pos(pb, p3),
+                Rect::from_two_pos(pc, p4),
+                Rect::from_two_pos(pd, p1)
+            ];
+            for part in parts.into_iter() {
+                ui.painter().rect_filled(part, Rounding::ZERO, self.mask_color);
+            }
         }
     }
 
