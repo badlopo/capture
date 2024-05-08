@@ -1,9 +1,9 @@
 mod app;
 mod config;
 
+use app::{CropApp};
+pub use config::CropperConfig;
 use egui::ViewportBuilder;
-use crate::cropper::app::{CropApp};
-use crate::cropper::config::CropperConfig;
 use crate::snapper::Snapper;
 
 pub struct Cropper;
