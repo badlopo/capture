@@ -19,12 +19,11 @@ fn get_4_corners(p1: Pos2, p2: Pos2) -> [Pos2; 4] {
 
 struct Helper {
     /// bottom-right position of the application window
-    b_r: Pos2,
+    max_point: Pos2,
 
     /// (name, position, size, data)
     fragments: Vec<(String, Pos2, Vec2, Vec<u8>)>,
 
-    cover_crop: bool,
     mask_color: Color32,
 
     crop_from: Option<Pos2>,
@@ -49,9 +48,8 @@ impl Helper {
         }
 
         Helper {
-            b_r: Pos2::new(app_w as f32, app_h as f32),
+            max_point: Pos2::new(app_w as f32, app_h as f32),
             fragments,
-            cover_crop: config.selection_mode,
             mask_color: config.get_mask_color(),
             crop_from: None,
             crop_to: None,
@@ -77,39 +75,30 @@ impl Helper {
         let from = self.crop_from.unwrap();
         let to = self.crop_to.unwrap();
 
-        if self.cover_crop {
-            ui.painter().rect_filled(
-                Rect::from_two_pos(from, to),
-                Rounding::ZERO,
-                self.mask_color,
-            );
-        } else {
-            // TODO: diagram
-            let pa = Pos2::ZERO;
-            let pb = Pos2::new(self.b_r.x, 0.0);
-            let pc = self.b_r;
-            let pd = Pos2::new(0.0, self.b_r.y);
-            let [p1, p2, p3, p4] = get_4_corners(from, to);
+        let pa = Pos2::ZERO;
+        let pb = Pos2::new(self.max_point.x, 0.0);
+        let pc = self.max_point;
+        let pd = Pos2::new(0.0, self.max_point.y);
+        let [p1, p2, p3, p4] = get_4_corners(from, to);
 
-            let parts = [
-                Rect::from_two_pos(pa, p2),
-                Rect::from_two_pos(pb, p3),
-                Rect::from_two_pos(pc, p4),
-                Rect::from_two_pos(pd, p1)
-            ];
-            for part in parts.into_iter() {
-                ui.painter().rect_filled(part, Rounding::ZERO, self.mask_color);
-            }
+        let parts = [
+            Rect::from_two_pos(pa, p2),
+            Rect::from_two_pos(pb, p3),
+            Rect::from_two_pos(pc, p4),
+            Rect::from_two_pos(pd, p1)
+        ];
+        for part in parts.into_iter() {
+            ui.painter().rect_filled(part, Rounding::ZERO, self.mask_color);
         }
     }
 
     pub fn start_crop(&mut self, at: Option<Pos2>) {
         // clamp crop area inside dimension
-        self.crop_from = at.and_then(|p| Some(p.clamp(Pos2::ZERO, self.b_r)));
+        self.crop_from = at.and_then(|p| Some(p.clamp(Pos2::ZERO, self.max_point)));
     }
     pub fn update_crop(&mut self, at: Option<Pos2>) {
         // clamp crop area inside dimension
-        self.crop_to = at.and_then(|p| Some(p.clamp(Pos2::ZERO, self.b_r)));
+        self.crop_to = at.and_then(|p| Some(p.clamp(Pos2::ZERO, self.max_point)));
     }
 }
 

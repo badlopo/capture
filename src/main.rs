@@ -5,12 +5,7 @@ mod cropper;
 mod snapper;
 
 fn main() {
-    // cropper::Cropper::exec(Default::default()).unwrap();
-
-    cropper::Cropper::exec(cropper::CropperConfig {
-        selection_mode: false,
-        ..Default::default()
-    }).unwrap();
+    cropper::Cropper::exec(Default::default()).unwrap();
 }
 
 // 窗口大于屏幕时, resize 会导致窗口被剪切为屏幕大小 (突变)
