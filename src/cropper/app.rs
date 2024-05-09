@@ -17,17 +17,28 @@ fn get_4_corners(p1: Pos2, p2: Pos2) -> [Pos2; 4] {
     ]
 }
 
+enum State {
+    // primary button is up, no crop area
+    Idle,
+    /// primary button is down, crop area is updating
+    Cropping(Pos2),
+    /// primary button is up, crop area is fixed
+    Cropped,
+    /// primary button is down, crop area is moving
+    Moving(Pos2),
+    // primary button is down, crop area is resizing
+    // Resizing(Handle),
+}
+
 struct Helper {
     /// bottom-right position of the application window
     max_point: Pos2,
-
     /// (name, position, size, data)
     fragments: Vec<(String, Pos2, Vec2, Vec<u8>)>,
-
     mask_color: Color32,
 
-    crop_from: Option<Pos2>,
-    crop_to: Option<Pos2>,
+    state: State,
+    crop_area: Option<Rect>,
 }
 
 impl Helper {
@@ -51,8 +62,8 @@ impl Helper {
             max_point: Pos2::new(app_w as f32, app_h as f32),
             fragments,
             mask_color: config.get_mask_color(),
-            crop_from: None,
-            crop_to: None,
+            state: State::Idle,
+            crop_area: None,
         }
     }
 
@@ -60,45 +71,66 @@ impl Helper {
         let fragments = self.fragments.clone();
         for fragment in fragments {
             let (name, pos, size, data) = fragment;
-            ui.put(
-                Rect::from_min_size(pos, size),
-                Image::from_bytes(name, data),
-            );
+            ui.put(Rect::from_min_size(pos, size), Image::from_bytes(name, data));
         }
     }
 
     pub fn draw_crop(&self, ui: &mut Ui) {
-        if self.crop_from.is_none() || self.crop_to.is_none() {
-            return;
-        }
+        if let Some(rect) = self.crop_area {
+            let tl_o = Pos2::ZERO;
+            let tr_o = Pos2::new(self.max_point.x, 0.0);
+            let br_o = self.max_point;
+            let bl_o = Pos2::new(0.0, self.max_point.y);
 
-        let from = self.crop_from.unwrap();
-        let to = self.crop_to.unwrap();
-
-        let pa = Pos2::ZERO;
-        let pb = Pos2::new(self.max_point.x, 0.0);
-        let pc = self.max_point;
-        let pd = Pos2::new(0.0, self.max_point.y);
-        let [p1, p2, p3, p4] = get_4_corners(from, to);
-
-        let parts = [
-            Rect::from_two_pos(pa, p2),
-            Rect::from_two_pos(pb, p3),
-            Rect::from_two_pos(pc, p4),
-            Rect::from_two_pos(pd, p1)
-        ];
-        for part in parts.into_iter() {
-            ui.painter().rect_filled(part, Rounding::ZERO, self.mask_color);
+            let parts = [
+                Rect::from_two_pos(tl_o, rect.right_top()),
+                Rect::from_two_pos(tr_o, rect.right_bottom()),
+                Rect::from_two_pos(br_o, rect.left_bottom()),
+                Rect::from_two_pos(bl_o, rect.left_top()),
+            ];
+            for part in parts.into_iter() {
+                ui.painter().rect_filled(part, Rounding::ZERO, self.mask_color);
+            }
         }
     }
 
-    pub fn start_crop(&mut self, at: Option<Pos2>) {
-        // clamp crop area inside dimension
-        self.crop_from = at.and_then(|p| Some(p.clamp(Pos2::ZERO, self.max_point)));
+    pub fn handle_primary_pressed(&mut self, at: Option<Pos2>) {
+        if let Some(p) = at {
+            self.state = match self.state {
+                State::Idle => State::Cropping(p),
+                State::Cropped => {
+                    // TODO: 根据点和rect的位置状态转移
+                    // 内部 => State::Moving
+                    // 边缘 => State::Resizing
+                    // 外部 => State::Cropped (无变化)
+                    State::Moving(p)
+                }
+                _ => unreachable!("point pressed event should not happen in this state"),
+            };
+        }
     }
-    pub fn update_crop(&mut self, at: Option<Pos2>) {
-        // clamp crop area inside dimension
-        self.crop_to = at.and_then(|p| Some(p.clamp(Pos2::ZERO, self.max_point)));
+
+    pub fn handle_primary_down(&mut self, at: Option<Pos2>) {
+        if let Some(p) = at {
+            let constrained_p = p.clamp(Pos2::ZERO, self.max_point);
+            match self.state {
+                State::Cropping(p_start) => {
+                    self.crop_area = Some(Rect::from_two_pos(p_start, constrained_p));
+                }
+                State::Moving(p_start) => {
+                    // FIXME: offset is compared to the start point, not the last point
+                    self.crop_area = self.crop_area.map(|rect| rect.translate(p - p_start));
+                }
+                _ => unreachable!("point down event should not happen in this state")
+            }
+        }
+    }
+
+    pub fn handle_primary_released(&mut self) {
+        self.state = match self.state {
+            State::Cropping(_) | State::Moving(_) => State::Cropped,
+            _ => unreachable!("point released event should not happen in this state"),
+        }
     }
 }
 
@@ -122,11 +154,14 @@ impl eframe::App for CropApp {
             .show(ctx, |ui| {
                 if ctx.input(|i| i.pointer.primary_pressed()) {
                     let pos = ctx.pointer_interact_pos();
-                    self.helper.start_crop(pos);
+                    self.helper.handle_primary_pressed(pos);
                 }
                 if ctx.input(|i| i.pointer.primary_down()) {
                     let pos = ctx.pointer_interact_pos();
-                    self.helper.update_crop(pos);
+                    self.helper.handle_primary_down(pos);
+                }
+                if ctx.input(|i| i.pointer.primary_released()) {
+                    self.helper.handle_primary_released();
                 }
 
                 self.helper.draw_screens(ui);
