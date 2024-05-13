@@ -89,7 +89,7 @@ struct Helper {
     fragments: Vec<(String, Pos2, Vec2, Vec<u8>)>,
     mask_color: Color32,
 
-    state: AppState,
+    app_state: AppState,
     crop_area: Option<Rect>,
 }
 
@@ -114,7 +114,7 @@ impl Helper {
             max_point: Pos2::new(app_w as f32, app_h as f32),
             fragments,
             mask_color: config.get_mask_color(),
-            state: AppState::Idle,
+            app_state: AppState::Idle,
             crop_area: None,
         }
     }
@@ -148,7 +148,7 @@ impl Helper {
 
     pub fn handle_primary_pressed(&mut self, at: Option<Pos2>) {
         if let Some(p) = at {
-            self.state = match self.state {
+            self.app_state = match self.app_state {
                 AppState::Idle => AppState::Cropping(p),
                 AppState::Cropped => {
                     // TODO: 根据点和rect的位置状态转移
@@ -157,7 +157,7 @@ impl Helper {
                     // 外部 => AppState::Cropped (无变化)
                     AppState::Moving(p)
                 }
-                _ => unreachable!("point pressed event should not happen in this state"),
+                _ => unreachable!("point pressed event should not happen in this app_state"),
             };
         }
     }
@@ -165,7 +165,7 @@ impl Helper {
     pub fn handle_primary_down(&mut self, at: Option<Pos2>) {
         if let Some(p) = at {
             let constrained_p = p.clamp(Pos2::ZERO, self.max_point);
-            match self.state {
+            match self.app_state {
                 AppState::Cropping(p_start) => {
                     self.crop_area = Some(Rect::from_two_pos(p_start, constrained_p));
                 }
@@ -173,17 +173,17 @@ impl Helper {
                     // translate the crop area by the delta of the current and previous points
                     self.crop_area = self.crop_area.map(|rect| rect.translate(p - p_prev));
                     // update the 'previous point'
-                    self.state = AppState::Moving(p);
+                    self.app_state = AppState::Moving(p);
                 }
-                _ => unreachable!("point down event should not happen in this state")
+                _ => unreachable!("point down event should not happen in this app_state")
             }
         }
     }
 
     pub fn handle_primary_released(&mut self) {
-        self.state = match self.state {
+        self.app_state = match self.app_state {
             AppState::Cropping(_) | AppState::Moving(_) => AppState::Cropped,
-            _ => unreachable!("point released event should not happen in this state"),
+            _ => unreachable!("point released event should not happen in this app_state"),
         }
     }
 
