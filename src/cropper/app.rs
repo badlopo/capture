@@ -2,6 +2,72 @@ use egui::{Frame, Color32, Context, Key, ViewportCommand, Image, Rect, Pos2, Vec
 use crate::canonical::{Snapshot};
 use crate::cropper::config::CropperConfig;
 
+enum PositionRelation {
+    Inside,
+    Outside,
+    /// we use something like one-hot encoding to represent the position relation.
+    ///
+    /// THAT IS:
+    ///
+    /// | Position     | Code |
+    /// |--------------|------|
+    /// | top-left     | 5    |
+    /// | top-right    | 3    |
+    /// | bottom-right | 8    |
+    /// | bottom-left  | 10   |
+    /// | top          | 1    |
+    /// | right        | 2    |
+    /// | bottom       | 6    |
+    /// | left         | 4    |
+    Edge(u8),
+}
+
+impl From<PositionRelation> for CursorIcon {
+    fn from(value: PositionRelation) -> Self {
+        match value {
+            PositionRelation::Inside => CursorIcon::Move,
+            PositionRelation::Outside => CursorIcon::Default,
+            PositionRelation::Edge(code) => match code {
+                5 => CursorIcon::ResizeNorthWest,
+                3 => CursorIcon::ResizeNorthEast,
+                8 => CursorIcon::ResizeSouthEast,
+                10 => CursorIcon::ResizeSouthWest,
+                1 => CursorIcon::ResizeNorth,
+                2 => CursorIcon::ResizeEast,
+                6 => CursorIcon::ResizeSouth,
+                4 => CursorIcon::ResizeWest,
+                _ => unreachable!("this code should not be reached")
+            }
+        }
+    }
+}
+
+fn get_position_relation(point: Pos2, bounding: Rect) -> PositionRelation {
+    let Pos2 { x: px, y: py } = point;
+    let Rect { min: Pos2 { x: bxl, y: byt }, max: Pos2 { x: bxr, y: byb } } = bounding;
+
+    let mut code = 0u8;
+    if px == bxl {
+        code += 4;
+    } else if px == bxr {
+        code += 2;
+    }
+    if py == byt {
+        code += 1;
+    } else if py == byb {
+        code += 6;
+    }
+
+    if code == 0 {
+        if px > bxl && px < bxr && py > byt && py < byb {
+            PositionRelation::Inside
+        } else {
+            PositionRelation::Outside
+        }
+    } else {
+        PositionRelation::Edge(code)
+    }
+}
 
 enum AppState {
     // primary button is up, no crop area
@@ -120,6 +186,17 @@ impl Helper {
             _ => unreachable!("point released event should not happen in this state"),
         }
     }
+
+    pub fn update_cursor(&self, ctx: &Context) {
+        if self.crop_area.is_none() {
+            return;
+        }
+
+        if let Some(p) = ctx.pointer_interact_pos() {
+            let position_relation = get_position_relation(p, self.crop_area.unwrap());
+            ctx.output_mut(|o| o.cursor_icon = position_relation.into());
+        }
+    }
 }
 
 pub struct CropApp {
@@ -140,6 +217,8 @@ impl eframe::App for CropApp {
         egui::CentralPanel::default()
             .frame(Frame::none().fill(Color32::WHITE))
             .show(ctx, |ui| {
+                self.helper.update_cursor(ctx);
+
                 if ctx.input(|i| i.pointer.primary_pressed()) {
                     let pos = ctx.pointer_interact_pos();
                     self.helper.handle_primary_pressed(pos);
