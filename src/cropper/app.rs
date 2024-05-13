@@ -117,9 +117,11 @@ impl Helper {
                 State::Cropping(p_start) => {
                     self.crop_area = Some(Rect::from_two_pos(p_start, constrained_p));
                 }
-                State::Moving(p_start) => {
-                    // FIXME: offset is compared to the start point, not the last point
-                    self.crop_area = self.crop_area.map(|rect| rect.translate(p - p_start));
+                State::Moving(p_prev) => {
+                    // translate the crop area by the delta of the current and previous points
+                    self.crop_area = self.crop_area.map(|rect| rect.translate(p - p_prev));
+                    // update the 'previous point'
+                    self.state = State::Moving(p);
                 }
                 _ => unreachable!("point down event should not happen in this state")
             }
