@@ -1,23 +1,9 @@
-use egui::{Frame, Color32, Context, Key, ViewportCommand, Image, Rect, Pos2, Vec2, Ui, Rounding};
+use egui::{Frame, Color32, Context, Key, ViewportCommand, Image, Rect, Pos2, Vec2, Ui, Rounding, CursorIcon};
 use crate::canonical::{Snapshot};
 use crate::cropper::config::CropperConfig;
 
-/// get the 4 corners (TL, TR, BR, BL) of the bounding-box from any 2 points (p1, p2)
-fn get_4_corners(p1: Pos2, p2: Pos2) -> [Pos2; 4] {
-    let xl = p1.x.min(p2.x);
-    let xr = p1.x.max(p2.x);
-    let yt = p1.y.min(p2.y);
-    let yb = p1.y.max(p2.y);
 
-    [
-        Pos2::new(xl, yt),
-        Pos2::new(xr, yt),
-        Pos2::new(xr, yb),
-        Pos2::new(xl, yb),
-    ]
-}
-
-enum State {
+enum AppState {
     // primary button is up, no crop area
     Idle,
     /// primary button is down, crop area is updating
@@ -37,7 +23,7 @@ struct Helper {
     fragments: Vec<(String, Pos2, Vec2, Vec<u8>)>,
     mask_color: Color32,
 
-    state: State,
+    state: AppState,
     crop_area: Option<Rect>,
 }
 
@@ -62,7 +48,7 @@ impl Helper {
             max_point: Pos2::new(app_w as f32, app_h as f32),
             fragments,
             mask_color: config.get_mask_color(),
-            state: State::Idle,
+            state: AppState::Idle,
             crop_area: None,
         }
     }
@@ -97,13 +83,13 @@ impl Helper {
     pub fn handle_primary_pressed(&mut self, at: Option<Pos2>) {
         if let Some(p) = at {
             self.state = match self.state {
-                State::Idle => State::Cropping(p),
-                State::Cropped => {
+                AppState::Idle => AppState::Cropping(p),
+                AppState::Cropped => {
                     // TODO: 根据点和rect的位置状态转移
-                    // 内部 => State::Moving
-                    // 边缘 => State::Resizing
-                    // 外部 => State::Cropped (无变化)
-                    State::Moving(p)
+                    // 内部 => AppState::Moving
+                    // 边缘 => AppState::Resizing
+                    // 外部 => AppState::Cropped (无变化)
+                    AppState::Moving(p)
                 }
                 _ => unreachable!("point pressed event should not happen in this state"),
             };
@@ -114,14 +100,14 @@ impl Helper {
         if let Some(p) = at {
             let constrained_p = p.clamp(Pos2::ZERO, self.max_point);
             match self.state {
-                State::Cropping(p_start) => {
+                AppState::Cropping(p_start) => {
                     self.crop_area = Some(Rect::from_two_pos(p_start, constrained_p));
                 }
-                State::Moving(p_prev) => {
+                AppState::Moving(p_prev) => {
                     // translate the crop area by the delta of the current and previous points
                     self.crop_area = self.crop_area.map(|rect| rect.translate(p - p_prev));
                     // update the 'previous point'
-                    self.state = State::Moving(p);
+                    self.state = AppState::Moving(p);
                 }
                 _ => unreachable!("point down event should not happen in this state")
             }
@@ -130,7 +116,7 @@ impl Helper {
 
     pub fn handle_primary_released(&mut self) {
         self.state = match self.state {
-            State::Cropping(_) | State::Moving(_) => State::Cropped,
+            AppState::Cropping(_) | AppState::Moving(_) => AppState::Cropped,
             _ => unreachable!("point released event should not happen in this state"),
         }
     }
@@ -157,12 +143,10 @@ impl eframe::App for CropApp {
                 if ctx.input(|i| i.pointer.primary_pressed()) {
                     let pos = ctx.pointer_interact_pos();
                     self.helper.handle_primary_pressed(pos);
-                }
-                if ctx.input(|i| i.pointer.primary_down()) {
+                } else if ctx.input(|i| i.pointer.primary_down()) {
                     let pos = ctx.pointer_interact_pos();
                     self.helper.handle_primary_down(pos);
-                }
-                if ctx.input(|i| i.pointer.primary_released()) {
+                } else if ctx.input(|i| i.pointer.primary_released()) {
                     self.helper.handle_primary_released();
                 }
 
