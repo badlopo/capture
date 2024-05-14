@@ -249,6 +249,8 @@ impl Helper {
 }
 
 pub struct CropApp {
+    // due to https://github.com/emilk/egui/issues/4468, we have to use this flag to check if the app is ready
+    ready: bool,
     helper: Helper,
 }
 
@@ -256,6 +258,7 @@ impl CropApp {
     pub fn new(snapshot: Snapshot, config: CropperConfig) -> CropApp {
         let helper = Helper::new(snapshot, config);
         CropApp {
+            ready: false,
             helper,
         }
     }
@@ -266,8 +269,10 @@ impl eframe::App for CropApp {
         egui::CentralPanel::default()
             .frame(Frame::none().fill(Color32::WHITE))
             .show(ctx, |ui| {
+                // update cursor icon
                 self.helper.update_cursor(ctx);
 
+                // handle primary button events
                 if ctx.input(|i| i.pointer.primary_pressed()) {
                     let pos = ctx.pointer_interact_pos();
                     self.helper.handle_primary_pressed(pos);
@@ -278,18 +283,26 @@ impl eframe::App for CropApp {
                     self.helper.handle_primary_released();
                 }
 
+                // draw ui
                 self.helper.draw_screens(ui);
                 self.helper.draw_crop(ui);
-
                 // TODO: draw operation UI
-                // ctx.send_viewport_cmd(ViewportCommand::Screenshot);
 
                 // exit conditions
-                // 1. press 'Enter' key
-                // 2. press 'Esc' key
-                // 3. lose focus -- TODO: https://github.com/emilk/egui/issues/4468
+                // - TODO: press 'Enter' key
+                // - press 'Esc' key
+                // - lose focus
                 if ctx.input(|i| i.key_pressed(Key::Escape)) {
                     ctx.send_viewport_cmd(ViewportCommand::Close);
+                }
+                if self.ready {
+                    if !ctx.input(|i| i.focused) {
+                        ctx.send_viewport_cmd(ViewportCommand::Close);
+                    }
+                } else {
+                    if ctx.input(|i| i.focused) {
+                        self.ready = true;
+                    }
                 }
             });
     }

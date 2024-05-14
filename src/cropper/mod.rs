@@ -20,8 +20,7 @@ impl Cropper {
                 .with_decorations(false)
                 .with_always_on_top()
                 .with_position([x as f32, y as f32])
-                // FIXME: bug with 'always_on_top' when 'with_inner_size' equals to screen size
-                .with_inner_size([w as f32 - 1.0, h as f32]),
+                .with_inner_size([w as f32, h as f32]),
             ..Default::default()
         };
 
