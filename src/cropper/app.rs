@@ -43,7 +43,7 @@ impl From<PositionRelation> for CursorIcon {
     }
 }
 
-fn get_position_relation(point: Pos2, bounding: Rect) -> PositionRelation {
+fn get_position_relation(bounding: Rect, point: Pos2) -> PositionRelation {
     let Pos2 { x: px, y: py } = point;
     let Rect { min: Pos2 { x: bxl, y: byt }, max: Pos2 { x: bxr, y: byb } } = bounding;
 
@@ -70,11 +70,29 @@ fn get_position_relation(point: Pos2, bounding: Rect) -> PositionRelation {
     }
 }
 
+fn apply_resize(rect: Rect, modify: Vec2, code: u8) -> Rect {
+    let Rect { min, max } = rect;
+
+    // FIXME: always use from_two_pos to enable over-drag
+    match code {
+        5 => Rect::from_two_pos(min + modify, max),
+        3 => Rect::from_two_pos(Pos2::new(min.x, min.y + modify.y), Pos2::new(max.x + modify.x, max.y)),
+        8 => Rect::from_two_pos(min, max + modify),
+        10 => Rect::from_two_pos(Pos2::new(min.x + modify.x, min.y), Pos2::new(max.x, max.y + modify.y)),
+        1 => Rect::from_two_pos(Pos2::new(min.x, min.y + modify.y), max),
+        2 => Rect::from_two_pos(min, Pos2::new(max.x + modify.x, max.y)),
+        6 => Rect::from_two_pos(min, Pos2::new(max.x, max.y + modify.y)),
+        4 => Rect::from_two_pos(Pos2::new(min.x + modify.x, min.y), max),
+        _ => unreachable!("this code should not be reached")
+    }
+}
+
 #[derive(Eq, PartialEq, Debug)]
 enum AppState {
     // primary button is up, no crop area
     Idle,
-    /// primary button is down, crop area is updating
+    /// primary button is down, crop area is updating.
+    /// - (start point)
     Cropping(Pos2),
     /// primary button is up, crop area is fixed
     Cropped,
@@ -82,9 +100,11 @@ enum AppState {
     /// this case happens when the primary button is pressed outside the crop area
     Ignored,
     /// primary button is down, crop area is moving
-    Moving(Pos2),
-    // primary button is down, crop area is resizing
-    Resizing(u8, Pos2),
+    /// - (crop area, start point)
+    Moving(Rect, Pos2),
+    /// primary button is down, crop area is resizing
+    /// - (crop area, start point, code)
+    Resizing(Rect, Pos2, u8),
 }
 
 struct Helper {
@@ -160,13 +180,13 @@ impl Helper {
                 // if there is a crop area, we need to update the
                 // cursor icon depending on the position relation
                 if let Some(p) = ctx.pointer_interact_pos() {
-                    ctx.output_mut(|o| o.cursor_icon = get_position_relation(p, self.crop_area.unwrap()).into());
+                    ctx.output_mut(|o| o.cursor_icon = get_position_relation(self.crop_area.unwrap(), p).into());
                 }
             }
-            AppState::Moving(_) => {
+            AppState::Moving(_, _) => {
                 ctx.output_mut(|o| o.cursor_icon = CursorIcon::Move);
             }
-            AppState::Resizing(code, _) => {
+            AppState::Resizing(_, _, code) => {
                 ctx.output_mut(|o| o.cursor_icon = PositionRelation::Edge(code).into());
             }
             _ => {}
@@ -180,10 +200,11 @@ impl Helper {
                 AppState::Cropped => {
                     // we need to check the position relation of the
                     // cursor to the crop area to determine the next state
-                    match get_position_relation(p, self.crop_area.unwrap()) {
-                        PositionRelation::Inside => AppState::Moving(p),
+                    let crop_area = self.crop_area.unwrap();
+                    match get_position_relation(crop_area, p) {
+                        PositionRelation::Inside => AppState::Moving(crop_area, p),
                         PositionRelation::Outside => AppState::Ignored,
-                        PositionRelation::Edge(code) => AppState::Resizing(code, p)
+                        PositionRelation::Edge(code) => AppState::Resizing(crop_area, p, code)
                     }
                 }
                 ref s @ _ => unreachable!("point pressed event should not happen in this app_state (state: {:?})", s),
@@ -198,14 +219,13 @@ impl Helper {
                 AppState::Cropping(p_start) => {
                     self.crop_area = Some(Rect::from_two_pos(p_start, constrained_p));
                 }
-                AppState::Moving(p_prev) => {
-                    // translate the crop area by the delta of the current and previous points
-                    self.crop_area = self.crop_area.map(|rect| rect.translate(p - p_prev));
-                    // update the 'previous point'
-                    self.app_state = AppState::Moving(p);
+                AppState::Moving(crop_area, p_start) => {
+                    // translate the crop area by the difference between the current point and the start point
+                    self.crop_area = Some(crop_area.translate(p - p_start));
                 }
-                AppState::Resizing(code, p_prev) => {
-                    // TODO: implement resizing
+                AppState::Resizing(crop_area, p_start, code) => {
+                    // resize the crop area by the difference between the current point and the start point
+                    self.crop_area = Some(apply_resize(crop_area, p - p_start, code));
                 }
                 AppState::Ignored => {
                     // when the primary button is pressed outside the crop area.
@@ -218,7 +238,7 @@ impl Helper {
 
     pub fn handle_primary_released(&mut self) {
         self.app_state = match self.app_state {
-            AppState::Cropping(_) | AppState::Moving(_) | AppState::Resizing(_, _) => AppState::Cropped,
+            AppState::Cropping(_) | AppState::Moving(_, _) | AppState::Resizing(_, _, _) => AppState::Cropped,
             AppState::Ignored => AppState::Cropped,
             ref s @ _ => unreachable!("point released event should not happen in this app_state (state: {:?})", s),
         }
