@@ -2,6 +2,7 @@ use egui::{Frame, Color32, Context, Key, ViewportCommand, Image, Rect, Pos2, Vec
 use crate::canonical::{Snapshot};
 use crate::cropper::config::CropperConfig;
 
+#[derive(Copy, Clone, Eq, PartialEq, Debug)]
 enum PositionRelation {
     Inside,
     Outside,
@@ -69,6 +70,7 @@ fn get_position_relation(point: Pos2, bounding: Rect) -> PositionRelation {
     }
 }
 
+#[derive(Eq, PartialEq, Debug)]
 enum AppState {
     // primary button is up, no crop area
     Idle,
@@ -76,10 +78,13 @@ enum AppState {
     Cropping(Pos2),
     /// primary button is up, crop area is fixed
     Cropped,
+    /// primary button is down/released, but we ignore the event and do nothing
+    /// this case happens when the primary button is pressed outside the crop area
+    Ignored,
     /// primary button is down, crop area is moving
     Moving(Pos2),
     // primary button is down, crop area is resizing
-    // Resizing(Handle),
+    Resizing(u8, Pos2),
 }
 
 struct Helper {
@@ -89,7 +94,10 @@ struct Helper {
     fragments: Vec<(String, Pos2, Vec2, Vec<u8>)>,
     mask_color: Color32,
 
+    /// state of the application
     app_state: AppState,
+
+    /// rect of the crop area
     crop_area: Option<Rect>,
 }
 
@@ -146,18 +154,39 @@ impl Helper {
         }
     }
 
+    pub fn update_cursor(&self, ctx: &Context) {
+        match self.app_state {
+            AppState::Cropped => {
+                // if there is a crop area, we need to update the
+                // cursor icon depending on the position relation
+                if let Some(p) = ctx.pointer_interact_pos() {
+                    ctx.output_mut(|o| o.cursor_icon = get_position_relation(p, self.crop_area.unwrap()).into());
+                }
+            }
+            AppState::Moving(_) => {
+                ctx.output_mut(|o| o.cursor_icon = CursorIcon::Move);
+            }
+            AppState::Resizing(code, _) => {
+                ctx.output_mut(|o| o.cursor_icon = PositionRelation::Edge(code).into());
+            }
+            _ => {}
+        }
+    }
+
     pub fn handle_primary_pressed(&mut self, at: Option<Pos2>) {
         if let Some(p) = at {
             self.app_state = match self.app_state {
                 AppState::Idle => AppState::Cropping(p),
                 AppState::Cropped => {
-                    // TODO: 根据点和rect的位置状态转移
-                    // 内部 => AppState::Moving
-                    // 边缘 => AppState::Resizing
-                    // 外部 => AppState::Cropped (无变化)
-                    AppState::Moving(p)
+                    // we need to check the position relation of the
+                    // cursor to the crop area to determine the next state
+                    match get_position_relation(p, self.crop_area.unwrap()) {
+                        PositionRelation::Inside => AppState::Moving(p),
+                        PositionRelation::Outside => AppState::Ignored,
+                        PositionRelation::Edge(code) => AppState::Resizing(code, p)
+                    }
                 }
-                _ => unreachable!("point pressed event should not happen in this app_state"),
+                ref s @ _ => unreachable!("point pressed event should not happen in this app_state (state: {:?})", s),
             };
         }
     }
@@ -175,26 +204,23 @@ impl Helper {
                     // update the 'previous point'
                     self.app_state = AppState::Moving(p);
                 }
-                _ => unreachable!("point down event should not happen in this app_state")
+                AppState::Resizing(code, p_prev) => {
+                    // TODO: implement resizing
+                }
+                AppState::Ignored => {
+                    // when the primary button is pressed outside the crop area.
+                    // we do nothing in this case.
+                }
+                ref s @ _ => unreachable!("point down event should not happen in this app_state (state: {:?})", s)
             }
         }
     }
 
     pub fn handle_primary_released(&mut self) {
         self.app_state = match self.app_state {
-            AppState::Cropping(_) | AppState::Moving(_) => AppState::Cropped,
-            _ => unreachable!("point released event should not happen in this app_state"),
-        }
-    }
-
-    pub fn update_cursor(&self, ctx: &Context) {
-        if self.crop_area.is_none() {
-            return;
-        }
-
-        if let Some(p) = ctx.pointer_interact_pos() {
-            let position_relation = get_position_relation(p, self.crop_area.unwrap());
-            ctx.output_mut(|o| o.cursor_icon = position_relation.into());
+            AppState::Cropping(_) | AppState::Moving(_) | AppState::Resizing(_, _) => AppState::Cropped,
+            AppState::Ignored => AppState::Cropped,
+            ref s @ _ => unreachable!("point released event should not happen in this app_state (state: {:?})", s),
         }
     }
 }
