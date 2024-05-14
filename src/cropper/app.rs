@@ -73,7 +73,6 @@ fn get_position_relation(bounding: Rect, point: Pos2) -> PositionRelation {
 fn apply_resize(rect: Rect, modify: Vec2, code: u8) -> Rect {
     let Rect { min, max } = rect;
 
-    // FIXME: always use from_two_pos to enable over-drag
     match code {
         5 => Rect::from_two_pos(min + modify, max),
         3 => Rect::from_two_pos(Pos2::new(min.x, min.y + modify.y), Pos2::new(max.x + modify.x, max.y)),
@@ -171,6 +170,10 @@ impl Helper {
             for part in parts.into_iter() {
                 ui.painter().rect_filled(part, Rounding::ZERO, self.mask_color);
             }
+
+            // TODO: resize handles *8
+
+            // TODO: size indicator (width x height)
         }
     }
 
@@ -282,8 +285,9 @@ impl eframe::App for CropApp {
                 // ctx.send_viewport_cmd(ViewportCommand::Screenshot);
 
                 // exit conditions
-                // 1. press 'Esc' key
-                // 2. lose focus -- TODO: https://github.com/emilk/egui/issues/4468
+                // 1. press 'Enter' key
+                // 2. press 'Esc' key
+                // 3. lose focus -- TODO: https://github.com/emilk/egui/issues/4468
                 if ctx.input(|i| i.key_pressed(Key::Escape)) {
                     ctx.send_viewport_cmd(ViewportCommand::Close);
                 }
