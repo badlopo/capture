@@ -70,6 +70,11 @@ fn get_position_relation(bounding: Rect, point: Pos2) -> PositionRelation {
     }
 }
 
+fn apply_move(rect: Rect, modify: Vec2) -> Rect {
+    // TODO: bound in screen area
+    rect.translate(modify)
+}
+
 fn apply_resize(rect: Rect, modify: Vec2, code: u8) -> Rect {
     let Rect { min, max } = rect;
 
@@ -224,7 +229,7 @@ impl Helper {
                 }
                 AppState::Moving(crop_area, p_start) => {
                     // translate the crop area by the difference between the current point and the start point
-                    self.crop_area = Some(crop_area.translate(p - p_start));
+                    self.crop_area = Some(apply_move(crop_area, p - p_start));
                 }
                 AppState::Resizing(crop_area, p_start, code) => {
                     // resize the crop area by the difference between the current point and the start point
