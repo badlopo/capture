@@ -1,4 +1,7 @@
-use egui::{Frame, Color32, Context, Key, ViewportCommand, Image, Rect, Pos2, Vec2, Ui, Rounding, CursorIcon};
+use std::cell::RefCell;
+use std::rc::Rc;
+use egui::{Frame, Color32, Context, Key, ViewportCommand, Image, Rect, Pos2, Vec2, Ui, Rounding, CursorIcon, Event};
+use image::RgbaImage;
 use crate::canonical::{Snapshot};
 use crate::cropper::config::CropperConfig;
 
@@ -251,20 +254,26 @@ impl Helper {
             ref s @ _ => unreachable!("point released event should not happen in this app_state (state: {:?})", s),
         }
     }
+
+    pub fn handle_enter_pressed(&self, ctx: &Context) {
+        ctx.send_viewport_cmd(ViewportCommand::Screenshot);
+    }
 }
 
 pub struct CropApp {
     // due to https://github.com/emilk/egui/issues/4468, we have to use this flag to check if the app is ready
     ready: bool,
     helper: Helper,
+    out: Rc<RefCell<Option<RgbaImage>>>,
 }
 
 impl CropApp {
-    pub fn new(snapshot: Snapshot, config: CropperConfig) -> CropApp {
+    pub fn new(snapshot: Snapshot, config: CropperConfig, out: Rc<RefCell<Option<RgbaImage>>>) -> CropApp {
         let helper = Helper::new(snapshot, config);
         CropApp {
             ready: false,
             helper,
+            out,
         }
     }
 }
@@ -274,10 +283,15 @@ impl eframe::App for CropApp {
         egui::CentralPanel::default()
             .frame(Frame::none().fill(Color32::WHITE))
             .show(ctx, |ui| {
+                // draw ui
+                self.helper.draw_screens(ui);
+                self.helper.draw_crop(ui);
+                // TODO: draw operation UI
+
                 // update cursor icon
                 self.helper.update_cursor(ctx);
 
-                // handle primary button events
+                // interactive cropping - primary pointer events
                 if ctx.input(|i| i.pointer.primary_pressed()) {
                     let pos = ctx.pointer_interact_pos();
                     self.helper.handle_primary_pressed(pos);
@@ -288,18 +302,16 @@ impl eframe::App for CropApp {
                     self.helper.handle_primary_released();
                 }
 
-                // draw ui
-                self.helper.draw_screens(ui);
-                self.helper.draw_crop(ui);
-                // TODO: draw operation UI
+                // exit trigger - press 'Enter' key
+                if ctx.input(|i| i.key_pressed(Key::Enter)) {
+                    self.helper.handle_enter_pressed(ctx);
+                }
 
-                // exit conditions
-                // - TODO: press 'Enter' key
-                // - press 'Esc' key
-                // - lose focus
+                // exit condition - press 'Esc' key
                 if ctx.input(|i| i.key_pressed(Key::Escape)) {
                     ctx.send_viewport_cmd(ViewportCommand::Close);
                 }
+                // exit condition - lose focus
                 if self.ready {
                     if !ctx.input(|i| i.focused) {
                         ctx.send_viewport_cmd(ViewportCommand::Close);
@@ -308,6 +320,27 @@ impl eframe::App for CropApp {
                     if ctx.input(|i| i.focused) {
                         self.ready = true;
                     }
+                }
+                // exit condition - screenshot event
+                if let Some(crop_area) = ctx.input(|i| {
+                    for event in &i.raw.events {
+                        if let Event::Screenshot { image, .. } = event {
+                            let ppp = i.pixels_per_point;
+                            return Some(image.region(&self.helper.crop_area.unwrap(), Some(ppp)));
+                        }
+                    }
+                    None
+                }) {
+                    // generate results and fill in 'out'
+                    let result = RgbaImage::from_raw(
+                        crop_area.width() as u32,
+                        crop_area.height() as u32,
+                        crop_area.as_raw().to_owned(),
+                    ).unwrap();
+                    *self.out.borrow_mut() = Some(result);
+
+                    // then exit
+                    ctx.send_viewport_cmd(ViewportCommand::Close);
                 }
             });
     }
